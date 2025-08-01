@@ -4,6 +4,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { db } from '../index';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import * as bcrypt from 'bcrypt';
 
 export type User = {
   userId: number;
@@ -14,9 +15,12 @@ export type User = {
 @Injectable()
 export class UsersService {
   async create(createUserDto: CreateUserDto) {
+    const salt = bcrypt.genSaltSync(10);
+    const hashed = await bcrypt.hash(createUserDto.password, salt);
+
     const user: typeof users.$inferInsert = {
-      username: createUserDto.userName,
-      password: createUserDto.password,
+      username: createUserDto.username,
+      password: hashed,
     };
 
     const inserted = await db.insert(users).values(user).returning();
